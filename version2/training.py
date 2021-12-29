@@ -10,7 +10,7 @@ from nltk.corpus import wordnet as wn
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn import model_selection, naive_bayes, svm
 from sklearn.metrics import classification_report, confusion_matrix
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score,recall_score,precision_score,f1_score
 from sklearn.metrics import roc_curve, roc_auc_score
 import matplotlib.pyplot as plt
 import pickle
@@ -46,7 +46,7 @@ tag_map['R'] = wn.ADV
 
 def text_preprocessing(text):
     # Step - 1b : Change all the text to lower case. This is required as python interprets 'dog' and 'DOG' differently
-    # text = text.lower()
+    text = text.lower()
 
     # Step - 1c : Tokenization : In this each entry in the corpus will be broken into set of words
     text_words_list = word_tokenize(text)
@@ -67,7 +67,7 @@ def text_preprocessing(text):
 
 
 d1['final'] = d1['DESC'].map(text_preprocessing)
-print(d1['final'])
+print("processed")
 # Step - 2: Split the model into Train and Test Data set
 # by sklearn library
 # training set 70%, test set 30%
@@ -83,12 +83,10 @@ Test_Y = Encoder.transform(Test_Y)
 
 # Step - 4: Vectorize the words by using TF-IDF Vectorizer - This is done to find how important a word in document is in comaprison to the corpus
 Tfidf_vect = TfidfVectorizer(max_features=5000)
-Tfidf_vect.fit(d1['DESC'])
+Tfidf_vect.fit(d1['final'])
 
 Train_X_Tfidf = Tfidf_vect.transform(Train_X)
 Test_X_Tfidf = Tfidf_vect.transform(Test_X)
-Train_Y_Tfidf = Tfidf_vect.transform(Train_Y)
-Test_Y_Tfidf = Tfidf_vect.transform(Test_Y)
 
 # Step - 5: Now we can run different algorithms to classify out data check for accuracy
 
@@ -108,10 +106,16 @@ Test_Y_Tfidf = Tfidf_vect.transform(Test_Y)
 SVM = svm.SVC(C=1.0, kernel='linear', degree=3, gamma='auto',probability=True)
 SVM.fit(Train_X_Tfidf, Train_Y)
 
-# Evaluating
-Pred_Y = SVM.predict(Test_X_Tfidf)
-print(confusion_matrix(Test_Y_Tfidf, Pred_Y))
-print(classification_report(Test_Y_Tfidf, Pred_Y))
+# predict the labels on validation dataset
+print("predicting")
+predictions_SVM = SVM.predict(Test_X_Tfidf)
+
+# Use accuracy_score function to get the accuracy
+print('Precision score: %.3f' % precision_score(predictions_SVM, Test_Y,average='macro'))
+print('recall score: %.3f' % recall_score(predictions_SVM, Test_Y,average='macro'))
+print("SVM Accuracy Score -> ", accuracy_score(predictions_SVM, Test_Y) * 100)
+print('F1 Score: %.3f' % f1_score(predictions_SVM, Test_Y,average='macro'))
+
 
 # # predict the labels on validation dataset
 # predictions_SVM = SVM.predict(Test_X_Tfidf)
@@ -131,25 +135,24 @@ print(classification_report(Test_Y_Tfidf, Pred_Y))
 # plt.ylabel('True positive rate')
 # plt.legend()
 # plt.show()
-# # Use accuracy_score function to get the accuracy
-# print("SVM Accuracy Score -> ", accuracy_score(predictions_SVM, Test_Y) * 100)
+
 
 
 # Saving Encdoer, TFIDF Vectorizer and the trained model for future infrerencing/prediction
 
-# # saving encoder to disk
-# filename = 'labelencoder_fitted.pkl'
-# pickle.dump(Encoder, open(filename, 'wb'))
-#
-# # saving TFIDF Vectorizer to disk
-# filename = 'Tfidf_vect_fitted.pkl'
-# pickle.dump(Tfidf_vect, open(filename, 'wb'))
-#
-# # saving the both models to disk
-# filename = 'svm_trained_model.sav'
-# pickle.dump(SVM, open(filename, 'wb'))
-#
-# # filename = 'nb_trained_model.sav'
-# # pickle.dump(Naive, open(filename, 'wb'))
-#
-# print("Files saved to disk! Proceed to inference.py")
+# saving encoder to disk
+filename = 'labelencoder_fitted.pkl'
+pickle.dump(Encoder, open(filename, 'wb'))
+
+# saving TFIDF Vectorizer to disk
+filename = 'Tfidf_vect_fitted.pkl'
+pickle.dump(Tfidf_vect, open(filename, 'wb'))
+
+# saving the both models to disk
+filename = 'svm_trained_model.sav'
+pickle.dump(SVM, open(filename, 'wb'))
+
+# filename = 'nb_trained_model.sav'
+# pickle.dump(Naive, open(filename, 'wb'))
+
+print("Files saved to disk! Proceed to inference.py")

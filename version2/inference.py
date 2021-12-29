@@ -57,14 +57,19 @@ SVM = pickle.load(open('svm_trained_model.sav', 'rb'))
 
 
 # Inference
-csv_file = open('2012_2017data.csv')
-csv_read_line = csv.reader(csv_file)
-print(csv_read_line[0])
-print(type(csv_read_line[0]))
-# sample_text = pd.read_csv(r"2012_2017data.csv")
+# csv_file = open('2012_2017data.csv')
+# csv_read_line = csv.reader(csv_file)
+# data = []
+# for one_line in csv_read_line:
+#     data.append(one_line)
+#
+# print(data)
+sample_text = pd.read_csv(r"2012_2017data.csv")
 # sample_text["content"] = sample_text["Content"].astype("string")
 # # sample_text_processed_vectorized = Tfidf_vect.transform([sample_text_processed])
-# sample_text['final']=sample_text["DESC"].map(text_preprocessing)
+sample_text['final']=sample_text["DESC"].map(text_preprocessing)
+sample_text_processed_vectorized = Tfidf_vect.transform(sample_text['final'])
+print(sample_text_processed_vectorized)
 # content=[]
 # for line in sample_text['final']:
 #     content.append(line)
@@ -92,12 +97,10 @@ print(type(csv_read_line[0]))
 # prediction_SVM = SVM.predict(sample_text["content"])
 # prediction_Naive = Naive.predict(sample_text_processed)
 
-sample_text = "The Windows Forms (aka WinForms) component in Microsoft .NET Framework 1.0 SP3, 1.1 SP1, 2.0 SP2, 3.0 SP2, 4, and 4.5 does not properly initialize memory arrays, which allows remote attackers to obtain sensitive information via (1) a crafted XAML browser application (XBAP) or (2) a crafted .NET Framework application that leverages a pointer to an unmanaged memory"  \
-              "location, aka System Drawing Information Disclosure Vulnerability."
-sample_text_processed = text_preprocessing(sample_text)
-sample_text_processed_vectorized = Tfidf_vect.transform([sample_text_processed])
+# sample_text_processed = text_preprocessing(sample_text)
+# sample_text_processed_vectorized = Tfidf_vect.transform([sample_text_processed])
 #
-prediction_SVM = SVM.predict(sample_text_processed_vectorized)
-print("Prediction from SVM Model:", labelencode.inverse_transform(prediction_SVM)[0])
-print("Prediction from NB Model:", labelencode.inverse_transform(prediction_Naive)[0])
+# prediction_SVM = SVM.predict(sample_text_processed_vectorized)
+# print("Prediction from SVM Model:", labelencode.inverse_transform(prediction_SVM)[0])
+# print("Prediction from NB Model:", labelencode.inverse_transform(prediction_Naive)[0])
 
