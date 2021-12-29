@@ -9,20 +9,33 @@ from collections import defaultdict
 from nltk.corpus import wordnet as wn
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn import model_selection, naive_bayes, svm
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import roc_curve, roc_auc_score
+import matplotlib.pyplot as plt
 import pickle
-
+# import nltk
+# import ssl
+#
+# try:
+#     _create_unverified_https_context = ssl._create_unverified_context
+# except AttributeError:
+#     pass
+# else:
+#     ssl._create_default_https_context = _create_unverified_https_context
+#
+# nltk.download()
 # Set Random seed
 np.random.seed(500)
 
 # Add the Data using pandas
 
-Corpus = pd.read_csv(r"D:\Python\Projects\Thailand\corpus.csv", encoding='latin-1')
+d1 = pd.read_csv(r"input.csv")
 
 # Step - 1: Data Pre-processing - This will help in getting better results through the classification algorithms
 
 # Step - 1a : Remove blank rows if any.
-Corpus['text'].dropna(inplace=True)
+d1['DESC'].dropna(inplace=True)
 
 # WordNetLemmatizer requires Pos tags to understand if the word is noun or verb or adjective etc. By default it is set to Noun
 tag_map = defaultdict(lambda: wn.NOUN)
@@ -33,7 +46,7 @@ tag_map['R'] = wn.ADV
 
 def text_preprocessing(text):
     # Step - 1b : Change all the text to lower case. This is required as python interprets 'dog' and 'DOG' differently
-    text = text.lower()
+    # text = text.lower()
 
     # Step - 1c : Tokenization : In this each entry in the corpus will be broken into set of words
     text_words_list = word_tokenize(text)
@@ -53,10 +66,13 @@ def text_preprocessing(text):
     return str(Final_words)
 
 
-Corpus['text_final'] = Corpus['text'].map(text_preprocessing)
-
+d1['final'] = d1['DESC'].map(text_preprocessing)
+print(d1['final'])
 # Step - 2: Split the model into Train and Test Data set
-Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(Corpus['text_final'], Corpus['label'],
+# by sklearn library
+# training set 70%, test set 30%
+# x --> predictor, y --> target
+Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(d1['final'], d1['label'],
                                                                     test_size=0.3)
 
 # Step - 3: Label encode the target variable  - This is done to transform Categorical data of string type in the data set into numerical values
@@ -67,51 +83,73 @@ Test_Y = Encoder.transform(Test_Y)
 
 # Step - 4: Vectorize the words by using TF-IDF Vectorizer - This is done to find how important a word in document is in comaprison to the corpus
 Tfidf_vect = TfidfVectorizer(max_features=5000)
-Tfidf_vect.fit(Corpus['text_final'])
+Tfidf_vect.fit(d1['DESC'])
 
 Train_X_Tfidf = Tfidf_vect.transform(Train_X)
 Test_X_Tfidf = Tfidf_vect.transform(Test_X)
+Train_Y_Tfidf = Tfidf_vect.transform(Train_Y)
+Test_Y_Tfidf = Tfidf_vect.transform(Test_Y)
 
 # Step - 5: Now we can run different algorithms to classify out data check for accuracy
 
 # Classifier - Algorithm - Naive Bayes
 # fit the training dataset on the classifier
-Naive = naive_bayes.MultinomialNB()
-Naive.fit(Train_X_Tfidf, Train_Y)
+# Naive = naive_bayes.MultinomialNB()
+# Naive.fit(Train_X_Tfidf, Train_Y)
 
 # predict the labels on validation dataset
-predictions_NB = Naive.predict(Test_X_Tfidf)
+# predictions_NB = Naive.predict(Test_X_Tfidf)
 
 # Use accuracy_score function to get the accuracy
-print("Naive Bayes Accuracy Score -> ", accuracy_score(predictions_NB, Test_Y) * 100)
+# print("Naive Bayes Accuracy Score -> ", accuracy_score(predictions_NB, Test_Y) * 100)
 
 # Classifier - Algorithm - SVM
 # fit the training dataset on the classifier
-SVM = svm.SVC(C=1.0, kernel='linear', degree=3, gamma='auto')
+SVM = svm.SVC(C=1.0, kernel='linear', degree=3, gamma='auto',probability=True)
 SVM.fit(Train_X_Tfidf, Train_Y)
 
-# predict the labels on validation dataset
-predictions_SVM = SVM.predict(Test_X_Tfidf)
+# Evaluating
+Pred_Y = SVM.predict(Test_X_Tfidf)
+print(confusion_matrix(Test_Y_Tfidf, Pred_Y))
+print(classification_report(Test_Y_Tfidf, Pred_Y))
 
-# Use accuracy_score function to get the accuracy
-print("SVM Accuracy Score -> ", accuracy_score(predictions_SVM, Test_Y) * 100)
+# # predict the labels on validation dataset
+# predictions_SVM = SVM.predict(Test_X_Tfidf)
+#
+# svm_prob = SVM.predict_proba(Train_X_Tfidf)
+# # probability for positive outcome is kept
+# svm_prob = svm_prob[:,1]
+#
+# svm_auc = roc_auc_score(Test_Y, svm_prob,multi_class='ovo')
+# print("SVM: AUROC = %.3f" %(svm_prob))
+# fpr, tpr, _ =roc_curve(Test_Y, svm_prob)
+#
+# # plot ROC curve
+# plt.plot(fpr, tpr, marker='.', label = "SVM (AUROC %0.3f)" %(svm_auc))
+# plt.title('ROC curve of SVM')
+# plt.xlabel('False positive rate')
+# plt.ylabel('True positive rate')
+# plt.legend()
+# plt.show()
+# # Use accuracy_score function to get the accuracy
+# print("SVM Accuracy Score -> ", accuracy_score(predictions_SVM, Test_Y) * 100)
 
 
 # Saving Encdoer, TFIDF Vectorizer and the trained model for future infrerencing/prediction
 
-# saving encoder to disk
-filename = 'labelencoder_fitted.pkl'
-pickle.dump(Encoder, open(filename, 'wb'))
-
-# saving TFIDF Vectorizer to disk
-filename = 'Tfidf_vect_fitted.pkl'
-pickle.dump(Tfidf_vect, open(filename, 'wb'))
-
-# saving the both models to disk
-filename = 'svm_trained_model.sav'
-pickle.dump(SVM, open(filename, 'wb'))
-
-filename = 'nb_trained_model.sav'
-pickle.dump(Naive, open(filename, 'wb'))
-
-print("Files saved to disk! Proceed to inference.py")
+# # saving encoder to disk
+# filename = 'labelencoder_fitted.pkl'
+# pickle.dump(Encoder, open(filename, 'wb'))
+#
+# # saving TFIDF Vectorizer to disk
+# filename = 'Tfidf_vect_fitted.pkl'
+# pickle.dump(Tfidf_vect, open(filename, 'wb'))
+#
+# # saving the both models to disk
+# filename = 'svm_trained_model.sav'
+# pickle.dump(SVM, open(filename, 'wb'))
+#
+# # filename = 'nb_trained_model.sav'
+# # pickle.dump(Naive, open(filename, 'wb'))
+#
+# print("Files saved to disk! Proceed to inference.py")
