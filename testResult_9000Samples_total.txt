@@ -1,0 +1,29 @@
+Train and test Naive bayes...
+Naive Bayes Accuracy Score ->  74.96296296296296
+Naive Bayes Precision Score ->  74.79438474139535
+Naive Bayes Recall Score ->  74.96296296296296
+Naive Bayes F-1 Score ->  74.78648161381872
+
+Train and test SVM...
+SVM Accuracy Score ->  81.4074074074074
+SVM Precision Score ->  81.38738148362452
+SVM Recall Score ->  81.4074074074074
+SVM F-1 Score ->  81.39690551216371
+
+Train and test random forest...
+Random forest Accuracy Score ->  70.37037037037037
+Random forest Precision Score ->  73.0335174644961
+Random forest Recall Score ->  70.37037037037037
+Random forest F-1 Score ->  68.09928556554847
+
+Train and test decision tree...
+Decision Tree Accuracy Score ->  78.25925925925927
+Decision Tree Precision Score ->  78.36612270290102
+Decision Tree Recall Score ->  78.25925925925927
+Decision Tree F-1 Score ->  78.30395846638332
+
+Train and test Logistic Regression...
+Logistic Regression Accuracy Score ->  80.74074074074075
+Logistic Regression Precision Score ->  80.65459001593692
+Logistic Regression Recall Score ->  80.74074074074075
+Logistic Regression F-1 Score ->  80.68667205682499
